@@ -1,13 +1,20 @@
 package com.techelevator.tenmo.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import javax.validation.constraints.Positive;
 import java.math.BigDecimal;
 
 public class Transfer {
 
+
     private int transferId;
+    @Positive(message = "Transfer amount must be greater than zero")
     private BigDecimal amount;
-    private String senderName;
-    private String receiverName;
+    @JsonProperty("sender_id")
+    private String from;
+    @JsonProperty("receiver_id")
+    private String to;
 
     public int getTransferId() {
         return transferId;
@@ -25,19 +32,19 @@ public class Transfer {
         this.amount = amount;
     }
 
-    public String getSenderName() {
-        return senderName;
+    public String getFrom() {
+        return from;
     }
 
-    public void setSenderName(String senderName) {
-        this.senderName = senderName;
+    public void setFrom(String from) {
+        this.from = from;
     }
 
-    public String getReceiverName() {
-        return receiverName;
+    public String getTo() {
+        return to;
     }
 
-    public void setReceiverName(String receiverName) {
-        this.receiverName = receiverName;
+    public void setTo(String to) {
+        this.to = to;
     }
 }

@@ -2,13 +2,16 @@ package com.techelevator.tenmo.controller;
 
 import com.techelevator.tenmo.dao.UserDao;
 import com.techelevator.tenmo.model.Account;
+import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.UserName;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.ParameterResolutionDelegate;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.List;
 
@@ -29,6 +32,11 @@ public class AppController {
     @RequestMapping(path = "/users", method = RequestMethod.GET)
     public List<UserName> getUsers(Principal principal) {
         return userDao.listUsersForTransfer(principal.getName());
+    }
+
+    @RequestMapping(path = "/transfer", method = RequestMethod.PUT)
+    public Transfer transferTE(@RequestBody Account transferInfo, Principal principal){
+        return userDao.transfer(transferInfo, principal.getName());
     }
 
 }

@@ -1,9 +1,11 @@
 package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.model.Account;
+import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
 import com.techelevator.tenmo.model.UserName;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -86,7 +88,7 @@ public class JdbcUserDao implements UserDao {
             SqlRowSet rows = jdbcTemplate.queryForRowSet(sql, userName);
             while(rows.next()){
                 Account account = new Account();
-                account.setUserName(rows.getString("username"));
+                account.setUsername(rows.getString("username"));
                 account.setBalance(rows.getBigDecimal("balance"));
                 accountList.add(account);
             }
@@ -112,6 +114,58 @@ public class JdbcUserDao implements UserDao {
             e.printStackTrace();
         }
         return users;
+    }
+
+    public Transfer transfer(Account transferInfo, String userName){
+        Transfer transferAttempt = new Transfer();
+
+        String checkSql = "SELECT balance FROM account JOIN tenmo_user ON account.user_id = tenmo_user.user_id WHERE username = ?;";
+        String addSql = "UPDATE account SET balance = balance + ? WHERE account_id = (SELECT account_id FROM account JOIN tenmo_user " +
+                "ON account.user_id = tenmo_user.user_id WHERE username = ?);";
+        String subtractSql = "UPDATE account SET balance = balance - ? WHERE account_id = (SELECT account_id FROM account JOIN tenmo_user " +
+                "ON account.user_id = tenmo_user.user_id WHERE username = ?);";
+        String transferSql = "INSERT INTO transfer (sender_id, receiver_id, amount) " +
+                "VALUES ((SELECT user_id FROM tenmo_user WHERE username = ?), " +
+                "(SELECT user_id FROM tenmo_user WHERE username = ?), " +
+                "?) RETURNING transfer_id;";
+
+        try {
+
+            transferAttempt.setFrom(userName);
+
+            transferAttempt.setTo(transferInfo.getUsername());
+
+            transferAttempt.setAmount(transferInfo.getBalance());
+
+
+            SqlRowSet row = jdbcTemplate.queryForRowSet(checkSql, userName);
+            if(row.next()){
+                if (row.getBigDecimal("balance").compareTo(transferInfo.getBalance()) < 0){
+                    throw new DataIntegrityViolationException("Transfer amount more than account balance");
+                }
+            }
+
+            int numberOfRows = jdbcTemplate.update(addSql, transferInfo.getBalance(), transferInfo.getUsername());
+            if (numberOfRows == 0){
+                System.out.println("Didn't update");
+                return transferAttempt;
+            }
+            numberOfRows = jdbcTemplate.update(subtractSql, transferInfo.getBalance(), userName);
+            if (numberOfRows == 0){
+                System.out.println("Didn't update");
+                return transferAttempt;
+            }
+
+            int newTransferId = jdbcTemplate.queryForObject(transferSql, Integer.class, userName, transferInfo.getUsername(), transferInfo.getBalance());
+            transferAttempt.setTransferId(newTransferId);
+
+        } catch (ResourceAccessException e){
+
+        } catch (NullPointerException e){
+            System.out.println("Couldn't find transfer info");
+        }
+
+        return transferAttempt;
     }
 
     private User mapRowToUser(SqlRowSet rs) {
