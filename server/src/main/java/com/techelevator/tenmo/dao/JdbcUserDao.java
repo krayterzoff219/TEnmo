@@ -1,5 +1,6 @@
 package com.techelevator.tenmo.dao;
 
+import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.User;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -7,6 +8,7 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -63,13 +65,35 @@ public class JdbcUserDao implements UserDao {
         Integer newUserId;
         try {
             newUserId = jdbcTemplate.queryForObject(sql, Integer.class, username, password_hash);
+            sql = "INSERT INTO account (user_id, balance) VALUES (?, ?);";
+            int numberOfRows = jdbcTemplate.update(sql, newUserId, new BigDecimal(1000));
+            if(numberOfRows!= 1){
+                return false;
+            }
         } catch (DataAccessException e) {
             return false;
         }
 
-        // TODO: Create the account record with initial balance
-
         return true;
+    }
+
+    public List<Account> retrieveBalances(String userName){
+        List<Account> accountList = new ArrayList<>();
+        String sql = "SELECT username, balance FROM account JOIN tenmo_user ON account.user_id = tenmo_user.user_id " +
+                "WHERE username = ?;";
+        try{
+            SqlRowSet rows = jdbcTemplate.queryForRowSet(sql, userName);
+            while(rows.next()){
+                Account account = new Account();
+                account.setUserName(rows.getString("username"));
+                account.setBalance(rows.getBigDecimal("balance"));
+                accountList.add(account);
+            }
+        } catch (ResourceAccessException e){
+
+        }
+
+        return accountList;
     }
 
     private User mapRowToUser(SqlRowSet rs) {
