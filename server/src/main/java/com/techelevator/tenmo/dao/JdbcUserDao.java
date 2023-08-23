@@ -118,7 +118,9 @@ public class JdbcUserDao implements UserDao {
 
     public Transfer transfer(Account transferInfo, String userName){
         Transfer transferAttempt = new Transfer();
-
+        if(transferInfo.getUsername().equals(userName)) {
+            throw new ResourceAccessException("Cannot transfer to self");
+        }
         String checkSql = "SELECT balance FROM account JOIN tenmo_user ON account.user_id = tenmo_user.user_id WHERE username = ?;";
         String addSql = "UPDATE account SET balance = balance + ? WHERE account_id = (SELECT account_id FROM account JOIN tenmo_user " +
                 "ON account.user_id = tenmo_user.user_id WHERE username = ?);";
@@ -166,6 +168,58 @@ public class JdbcUserDao implements UserDao {
         }
 
         return transferAttempt;
+    }
+
+    public List<Transfer> listTransfers(String username) {
+        List <Transfer> transfers = new ArrayList<>();
+        String sql = "Select transfer_id, username, amount From transfer Join tenmo_user ON transfer.receiver_id = tenmo_user.user_id Where sender_id = (Select user_id From tenmo_user Where username = ?);";
+        String receivedSql = "Select transfer_id, username, amount From transfer Join tenmo_user ON transfer.sender_id = tenmo_user.user_id Where receiver_id = (Select user_id From tenmo_user Where username = ?);";
+         try{
+             SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, username);
+             while(rowSet.next()) {
+                 Transfer transfer = new Transfer();
+                 transfer.setTransferId(rowSet.getInt("transfer_id"));
+                 transfer.setTo(rowSet.getString("username"));
+                 transfer.setTransferAmount(rowSet.getBigDecimal("amount"));
+                 transfer.setFrom(username);
+                 transfers.add(transfer);
+             }
+             rowSet = jdbcTemplate.queryForRowSet(receivedSql, username);
+             while(rowSet.next()) {
+                 Transfer transfer = new Transfer();
+                 transfer.setTransferId(rowSet.getInt("transfer_id"));
+                 transfer.setTo(rowSet.getString("username"));
+                 transfer.setTransferAmount(rowSet.getBigDecimal("amount"));
+                 transfer.setFrom(username);
+                 transfers.add(transfer);
+             }
+         }catch (ResourceAccessException e) {
+
+         }
+         return transfers;
+    }
+
+    public Transfer getTransferById(int transferId) {
+        Transfer transfer = new Transfer();
+        String sql = "Select transfer_id, username, sender_id, amount From transfer Join tenmo_user ON transfer.receiver_id = tenmo_user.user_id Where transfer_id = ?;";
+        String receivedSql = "Select username From tenmo_user Where user_id = ?;";
+        try{
+            SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, transferId);
+            int userId = -1;
+            if(rowSet.next()) {
+                transfer.setTransferId(transferId);
+                transfer.setTo(rowSet.getString("username"));
+                transfer.setTransferAmount(rowSet.getBigDecimal("amount"));
+                userId = rowSet.getInt("sender_id");
+            }
+            rowSet = jdbcTemplate.queryForRowSet(receivedSql, userId);
+            if(rowSet.next()) {
+                transfer.setFrom(rowSet.getString("username"));
+            }
+        }catch(ResourceAccessException e) {
+
+        }
+        return transfer;
     }
 
     private User mapRowToUser(SqlRowSet rs) {

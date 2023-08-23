@@ -22,4 +22,7 @@ public interface UserDao {
 
     List<UserName> listUsersForTransfer(String userName);
     Transfer transfer(Account transferInfo, String userName);
+    List<Transfer> listTransfers(String username);
+
+    Transfer getTransferById(int transferId);
 }

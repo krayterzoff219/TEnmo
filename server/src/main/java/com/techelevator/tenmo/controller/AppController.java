@@ -39,4 +39,19 @@ public class AppController {
         return userDao.transfer(transferInfo, principal.getName());
     }
 
+    @RequestMapping(path = "/transfer/view", method = RequestMethod.GET)
+        public List<Transfer> listTransfers(Principal principal) {
+            return userDao.listTransfers(principal.getName());
+        }
+
+
+    @RequestMapping(path = "/transfer/view/{id}", method = RequestMethod.GET)
+        public Transfer getTransferById(@PathVariable int id) {
+        return userDao.getTransferById(id);
+    }
+
+
+
 }
+
+
