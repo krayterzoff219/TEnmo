@@ -135,7 +135,7 @@ public class JdbcUserDao implements UserDao {
 
             transferAttempt.setTo(transferInfo.getUsername());
 
-            transferAttempt.setAmount(transferInfo.getBalance());
+            transferAttempt.setTransferAmount(transferInfo.getBalance());
 
 
             SqlRowSet row = jdbcTemplate.queryForRowSet(checkSql, userName);
