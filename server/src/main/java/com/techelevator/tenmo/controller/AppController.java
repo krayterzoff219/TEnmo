@@ -35,7 +35,7 @@ public class AppController {
     }
 
     @RequestMapping(path = "/transfer", method = RequestMethod.PUT)
-    public Transfer transferTE(@RequestBody Account transferInfo, Principal principal){
+    public Transfer transferTE(@RequestBody @Valid Account transferInfo, Principal principal){
         return userDao.transfer(transferInfo, principal.getName());
     }
 
