@@ -2,6 +2,7 @@ package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.User;
+import com.techelevator.tenmo.model.UserName;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -94,6 +95,23 @@ public class JdbcUserDao implements UserDao {
         }
 
         return accountList;
+    }
+
+    public List<UserName> listUsersForTransfer(String userName) {
+        List<UserName> users = new ArrayList<>();
+        String sql = "Select username From tenmo_user Where username != ?;";
+
+        try{
+            SqlRowSet row = jdbcTemplate.queryForRowSet(sql, userName);
+            while(row.next()) {
+                UserName user = new UserName();
+                user.setUserName(row.getString("username"));
+                users.add(user);
+            }
+        } catch (ResourceAccessException e) {
+            e.printStackTrace();
+        }
+        return users;
     }
 
     private User mapRowToUser(SqlRowSet rs) {

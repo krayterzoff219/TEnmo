@@ -2,6 +2,7 @@ package com.techelevator.tenmo.controller;
 
 import com.techelevator.tenmo.dao.UserDao;
 import com.techelevator.tenmo.model.Account;
+import com.techelevator.tenmo.model.UserName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +23,12 @@ public class AppController {
     @RequestMapping(path = "/balance", method = RequestMethod.GET)
     public List<Account> getBalances(Principal principal){
         return userDao.retrieveBalances(principal.getName());
+    }
+
+
+    @RequestMapping(path = "/users", method = RequestMethod.GET)
+    public List<UserName> getUsers(Principal principal) {
+        return userDao.listUsersForTransfer(principal.getName());
     }
 
 }
