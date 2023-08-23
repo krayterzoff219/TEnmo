@@ -10,10 +10,8 @@ public class Transfer {
 
     private int transferId;
     @Positive(message = "Transfer amount must be greater than zero")
-    private BigDecimal amount;
-    @JsonProperty("sender_id")
+    private BigDecimal transferAmount;
     private String from;
-    @JsonProperty("receiver_id")
     private String to;
 
     public int getTransferId() {
