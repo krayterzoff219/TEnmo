@@ -80,23 +80,23 @@ public class JdbcUserDao implements UserDao {
         return true;
     }
 
-    public List<Account> retrieveBalances(String userName){
-        List<Account> accountList = new ArrayList<>();
+    public Account retrieveBalances(String userName){
+        Account account = new Account();
         String sql = "SELECT username, balance FROM account JOIN tenmo_user ON account.user_id = tenmo_user.user_id " +
                 "WHERE username = ?;";
         try{
             SqlRowSet rows = jdbcTemplate.queryForRowSet(sql, userName);
             while(rows.next()){
-                Account account = new Account();
+
                 account.setUsername(rows.getString("username"));
                 account.setBalance(rows.getBigDecimal("balance"));
-                accountList.add(account);
+
             }
         } catch (ResourceAccessException e){
 
         }
 
-        return accountList;
+        return account;
     }
 
     public List<UserName> listUsersForTransfer(String userName) {
@@ -139,6 +139,8 @@ public class JdbcUserDao implements UserDao {
 
             transferAttempt.setTransferAmount(transferInfo.getBalance());
 
+            transferAttempt.setStatus("Approved");
+
 
             SqlRowSet row = jdbcTemplate.queryForRowSet(checkSql, userName);
             if(row.next()){
@@ -172,8 +174,8 @@ public class JdbcUserDao implements UserDao {
 
     public List<Transfer> listTransfers(String username) {
         List <Transfer> transfers = new ArrayList<>();
-        String sql = "Select transfer_id, username, amount From transfer Join tenmo_user ON transfer.receiver_id = tenmo_user.user_id Where sender_id = (Select user_id From tenmo_user Where username = ?);";
-        String receivedSql = "Select transfer_id, username, amount From transfer Join tenmo_user ON transfer.sender_id = tenmo_user.user_id Where receiver_id = (Select user_id From tenmo_user Where username = ?);";
+        String sql = "Select transfer_id, username, amount, status From transfer Join tenmo_user ON transfer.receiver_id = tenmo_user.user_id Where sender_id = (Select user_id From tenmo_user Where username = ?);";
+        String receivedSql = "Select transfer_id, username, amount, status From transfer Join tenmo_user ON transfer.sender_id = tenmo_user.user_id Where receiver_id = (Select user_id From tenmo_user Where username = ?);";
          try{
              SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, username);
              while(rowSet.next()) {
@@ -181,6 +183,7 @@ public class JdbcUserDao implements UserDao {
                  transfer.setTransferId(rowSet.getInt("transfer_id"));
                  transfer.setTo(rowSet.getString("username"));
                  transfer.setTransferAmount(rowSet.getBigDecimal("amount"));
+                 transfer.setStatus("status");
                  transfer.setFrom(username);
                  transfers.add(transfer);
              }
@@ -190,6 +193,7 @@ public class JdbcUserDao implements UserDao {
                  transfer.setTransferId(rowSet.getInt("transfer_id"));
                  transfer.setTo(rowSet.getString("username"));
                  transfer.setTransferAmount(rowSet.getBigDecimal("amount"));
+                 transfer.setStatus("status");
                  transfer.setFrom(username);
                  transfers.add(transfer);
              }
@@ -201,7 +205,7 @@ public class JdbcUserDao implements UserDao {
 
     public Transfer getTransferById(int transferId) {
         Transfer transfer = new Transfer();
-        String sql = "Select transfer_id, username, sender_id, amount From transfer Join tenmo_user ON transfer.receiver_id = tenmo_user.user_id Where transfer_id = ?;";
+        String sql = "Select transfer_id, username, sender_id, amount, status From transfer Join tenmo_user ON transfer.receiver_id = tenmo_user.user_id Where transfer_id = ?;";
         String receivedSql = "Select username From tenmo_user Where user_id = ?;";
         try{
             SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, transferId);
@@ -210,6 +214,7 @@ public class JdbcUserDao implements UserDao {
                 transfer.setTransferId(transferId);
                 transfer.setTo(rowSet.getString("username"));
                 transfer.setTransferAmount(rowSet.getBigDecimal("amount"));
+                transfer.setStatus("status");
                 userId = rowSet.getInt("sender_id");
             }
             rowSet = jdbcTemplate.queryForRowSet(receivedSql, userId);
@@ -220,6 +225,71 @@ public class JdbcUserDao implements UserDao {
 
         }
         return transfer;
+    }
+
+    public Transfer requestTransfer(Account transferInfo, String username){
+
+        Transfer transferAttempt = new Transfer();
+        if(transferInfo.getUsername().equals(username)) {
+            throw new ResourceAccessException("Cannot transfer to self");
+        }
+
+        String transferSql = "INSERT INTO transfer (sender_id, receiver_id, amount, status) " +
+                "VALUES ((SELECT user_id FROM tenmo_user WHERE username = ?), " +
+                "(SELECT user_id FROM tenmo_user WHERE username = ?), " +
+                "?, 'Pending') RETURNING transfer_id;";
+
+        try {
+
+            transferAttempt.setTo(username);
+
+            transferAttempt.setFrom(transferInfo.getUsername());
+
+            transferAttempt.setTransferAmount(transferInfo.getBalance());
+
+            transferAttempt.setStatus("Pending");
+
+            int newTransferId = jdbcTemplate.queryForObject(transferSql, Integer.class, transferInfo.getUsername(), username, transferInfo.getBalance());
+            transferAttempt.setTransferId(newTransferId);
+
+        } catch (ResourceAccessException e){
+
+        } catch (NullPointerException e){
+            System.out.println("Couldn't find transfer info");
+        }
+
+        return transferAttempt;
+    }
+
+    public List<Transfer> getPendingRequests(String username){
+        List <Transfer> transfers = new ArrayList<>();
+        String sql = "Select transfer_id, username, amount, status From transfer Join tenmo_user ON transfer.receiver_id = tenmo_user.user_id Where sender_id = (Select user_id From tenmo_user Where username = ?) AND status = 'Pending';";
+        String receivedSql = "Select transfer_id, username, amount, status From transfer Join tenmo_user ON transfer.sender_id = tenmo_user.user_id Where receiver_id = (Select user_id From tenmo_user Where username = ?) AND status = 'Pending';";
+        try{
+            SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, username);
+            while(rowSet.next()) {
+                Transfer transfer = new Transfer();
+                transfer.setTransferId(rowSet.getInt("transfer_id"));
+                transfer.setTo(rowSet.getString("username"));
+                transfer.setTransferAmount(rowSet.getBigDecimal("amount"));
+                transfer.setStatus(rowSet.getString("status"));
+                transfer.setFrom(username);
+                transfers.add(transfer);
+            }
+            rowSet = jdbcTemplate.queryForRowSet(receivedSql, username);
+            while(rowSet.next()) {
+                Transfer transfer = new Transfer();
+                transfer.setTransferId(rowSet.getInt("transfer_id"));
+                transfer.setTo(rowSet.getString("username"));
+                transfer.setTransferAmount(rowSet.getBigDecimal("amount"));
+                transfer.setStatus(rowSet.getString("status"));
+                transfer.setFrom(username);
+                transfers.add(transfer);
+            }
+        }catch (ResourceAccessException e) {
+
+        }
+        return transfers;
     }
 
     private User mapRowToUser(SqlRowSet rs) {
