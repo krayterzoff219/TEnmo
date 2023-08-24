@@ -19,6 +19,7 @@ import java.security.Principal;
 import java.util.List;
 
 @RestController
+@RequestMapping(path = "/tenmo")
 @PreAuthorize("isAuthenticated()")
 //@RequestMapping(path = "")
 public class AppController {
@@ -53,12 +54,12 @@ public class AppController {
     }
 
 
-    @RequestMapping(path = "/transfer/view/{id}", method = RequestMethod.GET)
+    @RequestMapping(path = "/transfer/{id}", method = RequestMethod.GET)
     public Transfer getTransferById(@PathVariable int id) {
         return userDao.getTransferById(id);
     }
 
-    @RequestMapping(path = "/transfer/view/pending", method = RequestMethod.GET)
+    @RequestMapping(path = "/transfer/pending", method = RequestMethod.GET)
     public List<Transfer> listPendingTransfers(Principal principal){
         return userDao.getPendingRequests(principal.getName());
     }
