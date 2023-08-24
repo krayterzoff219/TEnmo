@@ -3,12 +3,14 @@ package com.techelevator.tenmo.controller;
 import com.techelevator.tenmo.dao.UserDao;
 import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.Transfer;
+import com.techelevator.tenmo.model.TransferStatusUpdate;
 import com.techelevator.tenmo.model.UserName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.ParameterResolutionDelegate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.ResourceAccessException;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -38,7 +40,11 @@ public class AppController {
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(path = "/transfer", method = RequestMethod.PUT)
     public Transfer transferTE(@RequestBody @Valid Account transferInfo, Principal principal){
-        return userDao.transfer(transferInfo, principal.getName());
+        if(userDao.transfer(transferInfo, principal.getName())) {
+            return userDao.recordTransfer(transferInfo, principal.getName());
+        } else {
+            return null;
+        }
     }
 
     @RequestMapping(path = "/transfer/view", method = RequestMethod.GET)
@@ -60,6 +66,17 @@ public class AppController {
     @RequestMapping(path = "/transfer/request", method = RequestMethod.POST)
     public Transfer requestTransfer(@RequestBody @Valid Account transferInfo, Principal principal){
         return userDao.requestTransfer(transferInfo, principal.getName());
+    }
+
+    @RequestMapping(path = "/transfer/pending", method = RequestMethod.PUT)
+    public Transfer processTransferRequest(@RequestBody @Valid TransferStatusUpdate update, Principal principal) {
+        if(update.getStatus().equals("Approved")) {
+            return userDao.acceptRequest(update, principal.getName());
+        } else if(update.getStatus().equals("Rejected")) {
+            return userDao.rejectRequest(update, principal.getName());
+        } else {
+            throw new ResourceAccessException("Transfer Request Could Not Be Processed.");
+        }
     }
 
 }

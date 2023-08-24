@@ -1,9 +1,6 @@
 package com.techelevator.tenmo.dao;
 
-import com.techelevator.tenmo.model.Account;
-import com.techelevator.tenmo.model.Transfer;
-import com.techelevator.tenmo.model.User;
-import com.techelevator.tenmo.model.UserName;
+import com.techelevator.tenmo.model.*;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -116,8 +113,8 @@ public class JdbcUserDao implements UserDao {
         return users;
     }
 
-    public Transfer transfer(Account transferInfo, String userName){
-        Transfer transferAttempt = new Transfer();
+    public boolean transfer(Account transferInfo, String userName){
+        boolean success = false;
         if(transferInfo.getUsername().equals(userName)) {
             throw new ResourceAccessException("Cannot transfer to self");
         }
@@ -126,20 +123,8 @@ public class JdbcUserDao implements UserDao {
                 "ON account.user_id = tenmo_user.user_id WHERE username = ?);";
         String subtractSql = "UPDATE account SET balance = balance - ? WHERE account_id = (SELECT account_id FROM account JOIN tenmo_user " +
                 "ON account.user_id = tenmo_user.user_id WHERE username = ?);";
-        String transferSql = "INSERT INTO transfer (sender_id, receiver_id, amount) " +
-                "VALUES ((SELECT user_id FROM tenmo_user WHERE username = ?), " +
-                "(SELECT user_id FROM tenmo_user WHERE username = ?), " +
-                "?) RETURNING transfer_id;";
 
         try {
-
-            transferAttempt.setFrom(userName);
-
-            transferAttempt.setTo(transferInfo.getUsername());
-
-            transferAttempt.setTransferAmount(transferInfo.getBalance());
-
-            transferAttempt.setStatus("Approved");
 
 
             SqlRowSet row = jdbcTemplate.queryForRowSet(checkSql, userName);
@@ -152,23 +137,43 @@ public class JdbcUserDao implements UserDao {
             int numberOfRows = jdbcTemplate.update(addSql, transferInfo.getBalance(), transferInfo.getUsername());
             if (numberOfRows == 0){
                 System.out.println("Didn't update");
-                return transferAttempt;
+
             }
             numberOfRows = jdbcTemplate.update(subtractSql, transferInfo.getBalance(), userName);
             if (numberOfRows == 0){
                 System.out.println("Didn't update");
-                return transferAttempt;
+
             }
-
-            int newTransferId = jdbcTemplate.queryForObject(transferSql, Integer.class, userName, transferInfo.getUsername(), transferInfo.getBalance());
-            transferAttempt.setTransferId(newTransferId);
-
+            success = true;
         } catch (ResourceAccessException e){
 
         } catch (NullPointerException e){
             System.out.println("Couldn't find transfer info");
         }
+        return success;
+    }
 
+    public Transfer recordTransfer(Account transferInfo, String userName) {
+        Transfer transferAttempt = new Transfer();
+        String transferSql = "INSERT INTO transfer (sender_id, receiver_id, amount) " +
+                "VALUES ((SELECT user_id FROM tenmo_user WHERE username = ?), " +
+                "(SELECT user_id FROM tenmo_user WHERE username = ?), " +
+                "?) RETURNING transfer_id;";
+
+        try {
+            transferAttempt.setFrom(userName);
+
+            transferAttempt.setTo(transferInfo.getUsername());
+
+            transferAttempt.setTransferAmount(transferInfo.getBalance());
+
+            transferAttempt.setStatus("Approved");
+
+            int newTransferId = jdbcTemplate.queryForObject(transferSql, Integer.class, userName, transferInfo.getUsername(), transferInfo.getBalance());
+            transferAttempt.setTransferId(newTransferId);
+        }catch (ResourceAccessException e){
+            e.printStackTrace();
+        }
         return transferAttempt;
     }
 
@@ -183,7 +188,7 @@ public class JdbcUserDao implements UserDao {
                  transfer.setTransferId(rowSet.getInt("transfer_id"));
                  transfer.setTo(rowSet.getString("username"));
                  transfer.setTransferAmount(rowSet.getBigDecimal("amount"));
-                 transfer.setStatus("status");
+                 transfer.setStatus(rowSet.getString("status"));
                  transfer.setFrom(username);
                  transfers.add(transfer);
              }
@@ -193,7 +198,7 @@ public class JdbcUserDao implements UserDao {
                  transfer.setTransferId(rowSet.getInt("transfer_id"));
                  transfer.setTo(rowSet.getString("username"));
                  transfer.setTransferAmount(rowSet.getBigDecimal("amount"));
-                 transfer.setStatus("status");
+                 transfer.setStatus(rowSet.getString("status"));
                  transfer.setFrom(username);
                  transfers.add(transfer);
              }
@@ -214,7 +219,7 @@ public class JdbcUserDao implements UserDao {
                 transfer.setTransferId(transferId);
                 transfer.setTo(rowSet.getString("username"));
                 transfer.setTransferAmount(rowSet.getBigDecimal("amount"));
-                transfer.setStatus("status");
+                transfer.setStatus(rowSet.getString("status"));
                 userId = rowSet.getInt("sender_id");
             }
             rowSet = jdbcTemplate.queryForRowSet(receivedSql, userId);
@@ -290,6 +295,54 @@ public class JdbcUserDao implements UserDao {
 
         }
         return transfers;
+    }
+
+    public Transfer acceptRequest(TransferStatusUpdate update, String username) {
+        //check for: does receiver have enough TE, pending status required, make sure user accepting request match the from(sender_id)
+        Transfer transfer = getTransferById(update.getTransferId());
+        Account transferInfo = new Account();
+        transferInfo.setUsername(transfer.getTo());
+        transferInfo.setBalance(transfer.getTransferAmount());
+        String sql = "Update transfer Set status = 'Approved' Where transfer_id = ?;";
+        if(!transfer.getStatus().equals("Pending")) {
+            throw new ResourceAccessException("Request has already been processed.");
+        }
+        if(!transfer.getFrom().equals(username)) {
+            throw new ResourceAccessException("You do not have permission to access this record.");
+        }
+        if(transfer(transferInfo, username)) {
+            try{
+                int numberOfRows = jdbcTemplate.update(sql, update.getTransferId());
+                if(numberOfRows == 0) {
+                    throw new ResourceAccessException("Did not update.");
+                }
+            }catch(ResourceAccessException e) {
+                e.printStackTrace();
+            }
+        } else {
+            throw new ResourceAccessException("Transfer Request Can Not Be Approved, Not Enough Funds");
+        }
+        return getTransferById(update.getTransferId());
+    }
+
+    public Transfer rejectRequest(TransferStatusUpdate update, String username) {
+        Transfer transfer = getTransferById(update.getTransferId());
+        String sql = "Update transfer Set status = 'Rejected' Where transfer_id = ?;";
+        if(!transfer.getStatus().equals("Pending")) {
+            throw new ResourceAccessException("Request has already been processed.");
+        }
+        if(!transfer.getFrom().equals(username)) {
+            throw new ResourceAccessException("You do not have permission to access this record.");
+        }
+        try{
+            int numberOfRows = jdbcTemplate.update(sql, update.getTransferId());
+            if(numberOfRows == 0) {
+                throw new ResourceAccessException("Did not update.");
+            }
+        }catch(ResourceAccessException e) {
+            e.printStackTrace();
+        }
+        return getTransferById(update.getTransferId());
     }
 
     private User mapRowToUser(SqlRowSet rs) {
