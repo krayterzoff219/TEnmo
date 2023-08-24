@@ -18,11 +18,14 @@ public interface UserDao {
 
     boolean create(String username, String password);
 
-    List<Account> retrieveBalances(String userName);
+    Account retrieveBalances(String userName);
 
     List<UserName> listUsersForTransfer(String userName);
     Transfer transfer(Account transferInfo, String userName);
     List<Transfer> listTransfers(String username);
 
     Transfer getTransferById(int transferId);
+
+    Transfer requestTransfer(Account transferInfo, String username);
+    List<Transfer> getPendingRequests(String username);
 }
