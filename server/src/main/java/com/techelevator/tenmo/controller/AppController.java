@@ -80,6 +80,11 @@ public class AppController {
         }
     }
 
+    @RequestMapping(path = "/deposit", method = RequestMethod.PUT)
+    public Account depositMoney(@RequestBody BigDecimal amount, Principal principal) {
+        return userDao.depositMoney(amount, principal.getName());
+    }
+
 }
 
 

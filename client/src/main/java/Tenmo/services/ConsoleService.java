@@ -3,6 +3,7 @@ package Tenmo.services;
 import Tenmo.model.Transfer;
 import Tenmo.model.User;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Scanner;
 
@@ -28,8 +29,9 @@ public class ConsoleService {
         System.out.println("(2) Deposit Money");
         System.out.println("(3) Send Money");
         System.out.println("(4) Check Pending Requests");
-        System.out.println("(5) Request Money");
-        System.out.println("(6) Return to Main Menu");
+        System.out.println("(5) View All Transfers");
+        System.out.println("(6) Request Money");
+        System.out.println("(7) Return to Main Menu");
     }
 
     public void printPendingRequests(List<Transfer> requests){
@@ -40,8 +42,16 @@ public class ConsoleService {
         System.out.println();
     }
 
+    public void printTransfers(Transfer[] allTransfers) {
+        System.out.println();
+        for(Transfer transfer : allTransfers) {
+            System.out.println(transfer);
+        }
+        System.out.println();
+    }
 
-    public void printUserList(List<User> users){
+
+    public void printUserList(User[] users){
         System.out.println();
         for(User user : users){
             System.out.println("Username: " + user.getUsername());
@@ -64,7 +74,19 @@ public class ConsoleService {
         return userScan.nextLine();
     }
 
+    public BigDecimal promptForAmount(String prompt) {
+        System.out.println(prompt);
+        String userInput = userScan.nextLine();
+        return new BigDecimal(userInput);
+    }
+
     public void printErrorMessage(){
         System.out.println("An error occurred.");
+    }
+
+    public void pause() {
+        System.out.println();
+        System.out.println("Press enter to continue.");
+        userScan.nextLine();
     }
 }

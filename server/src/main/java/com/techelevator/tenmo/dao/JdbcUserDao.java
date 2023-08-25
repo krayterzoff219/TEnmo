@@ -350,6 +350,19 @@ public class JdbcUserDao implements UserDao {
         return getTransferById(update.getTransferId(), username);
     }
 
+    public Account depositMoney(BigDecimal amount, String username) {
+        String sql = "Update account Set balance = balance + ? Where user_id = ?;";
+        try{
+            int numberOfRows = jdbcTemplate.update(sql, amount, findIdByUsername(username));
+            if(numberOfRows == 0) {
+                throw new ResourceAccessException("Deposit failed, account not updated.");
+            }
+        }catch (ResourceAccessException e) {
+            e.printStackTrace();
+        }
+        return retrieveBalances(username);
+    }
+
     private User mapRowToUser(SqlRowSet rs) {
         User user = new User();
         user.setId(rs.getInt("user_id"));

@@ -5,6 +5,7 @@ import Tenmo.model.User;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public class UserService {
 
@@ -20,7 +21,7 @@ public class UserService {
         return null;
     }
 
-    public boolean sendMoney(){
+    public boolean sendMoney(BigDecimal amount, String username){
         return false;
     }
 
@@ -28,31 +29,27 @@ public class UserService {
         return null;
     }
 
-    public Transfer getTransferById (){
-        return null;
-    }
-
     public Transfer[] getTransfersForUser(){
         return null;
     }
 
-    public boolean requestMoney(){
+    public boolean requestMoney(BigDecimal amount, String username){
         return false;
     }
 
-    public void viewPendingRequests(){
-
+    public List<Transfer> viewPendingRequests(){
+        return null;
     }
 
-    public boolean approveRequest(){
+    public boolean approveRequest(int id){
         return false;
     }
 
-    public boolean rejectRequest(){
+    public boolean rejectRequest(int id){
         return false;
     }
 
-    public BigDecimal depositMoney(){
+    public BigDecimal depositMoney(BigDecimal amount){
         return null;
     }
 }

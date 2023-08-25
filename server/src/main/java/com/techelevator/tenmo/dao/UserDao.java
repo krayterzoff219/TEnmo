@@ -28,4 +28,5 @@ public interface UserDao {
     Transfer recordTransfer(Account transferInfo, String userName);
     Transfer acceptRequest(TransferStatusUpdate update, String userName);
     Transfer rejectRequest(TransferStatusUpdate update, String userName);
+    Account depositMoney(BigDecimal amount, String username);
 }
