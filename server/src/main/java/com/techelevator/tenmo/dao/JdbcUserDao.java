@@ -304,7 +304,7 @@ public class JdbcUserDao implements UserDao {
 
     public Transfer acceptRequest(TransferStatusUpdate update, String username) {
         //check for: does receiver have enough TE, pending status required, make sure user accepting request match the from(sender_id)
-        Transfer transfer = getTransferById(update.getTransferId());
+        Transfer transfer = getTransferById(update.getTransferId(), username);
         Account transferInfo = new Account();
         transferInfo.setUsername(transfer.getTo());
         transferInfo.setBalance(transfer.getTransferAmount());
@@ -327,11 +327,11 @@ public class JdbcUserDao implements UserDao {
         } else {
             throw new ResourceAccessException("Transfer Request Can Not Be Approved, Not Enough Funds");
         }
-        return getTransferById(update.getTransferId());
+        return getTransferById(update.getTransferId(), username);
     }
 
     public Transfer rejectRequest(TransferStatusUpdate update, String username) {
-        Transfer transfer = getTransferById(update.getTransferId());
+        Transfer transfer = getTransferById(update.getTransferId(), username);
         String sql = "Update transfer Set status = 'Rejected' Where transfer_id = ?;";
         if(!transfer.getStatus().equals("Pending")) {
             throw new ResourceAccessException("Request has already been processed.");
@@ -347,7 +347,7 @@ public class JdbcUserDao implements UserDao {
         }catch(ResourceAccessException e) {
             e.printStackTrace();
         }
-        return getTransferById(update.getTransferId());
+        return getTransferById(update.getTransferId(), username);
     }
 
     private User mapRowToUser(SqlRowSet rs) {

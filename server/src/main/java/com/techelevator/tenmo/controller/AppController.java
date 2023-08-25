@@ -55,8 +55,8 @@ public class AppController {
 
 
     @RequestMapping(path = "/transfer/{id}", method = RequestMethod.GET)
-    public Transfer getTransferById(@PathVariable int id) {
-        return userDao.getTransferById(id);
+    public Transfer getTransferById(@PathVariable int id, Principal principal) {
+        return userDao.getTransferById(id, principal.getName());
     }
 
     @RequestMapping(path = "/transfer/pending", method = RequestMethod.GET)
