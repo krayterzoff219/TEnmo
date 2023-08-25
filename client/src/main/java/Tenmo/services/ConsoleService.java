@@ -34,10 +34,11 @@ public class ConsoleService {
         System.out.println("(7) Return to Main Menu");
     }
 
-    public void printPendingRequests(List<Transfer> requests){
+    public void printPendingRequests(Transfer[] requests){
         System.out.println();
+        int count = 1;
         for(Transfer request : requests){
-            System.out.println(request);
+            System.out.println("(" + count + ") \n" + request);
         }
         System.out.println();
     }

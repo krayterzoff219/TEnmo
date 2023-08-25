@@ -9,7 +9,7 @@ import org.springframework.web.client.RestTemplate;
 
 public class AuthenticationService {
 
-    private static final String API_BASE_URL = "http://localhost:8080/tenmo";
+    private static final String API_BASE_URL = "http://localhost:8080/tenmo/";
     private final RestTemplate restTemplate = new RestTemplate();
 
     public String login(String username, String password) {
