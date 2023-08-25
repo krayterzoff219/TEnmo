@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -208,10 +209,11 @@ public class JdbcUserDao implements UserDao {
          return transfers;
     }
 
-    public Transfer getTransferById(int transferId) {
+    public Transfer getTransferById(int transferId, String username) {
         Transfer transfer = new Transfer();
         String sql = "Select transfer_id, username, sender_id, amount, status From transfer Join tenmo_user ON transfer.receiver_id = tenmo_user.user_id Where transfer_id = ?;";
         String receivedSql = "Select username From tenmo_user Where user_id = ?;";
+
         try{
             SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, transferId);
             int userId = -1;
@@ -228,6 +230,9 @@ public class JdbcUserDao implements UserDao {
             }
         }catch(ResourceAccessException e) {
 
+        }
+        if(!username.equals(transfer.getFrom()) && !username.equals(transfer.getTo())){
+            throw new ResourceAccessException("You do not have access to this transfer information.");
         }
         return transfer;
     }
