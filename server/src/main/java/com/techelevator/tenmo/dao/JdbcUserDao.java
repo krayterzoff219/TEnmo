@@ -115,7 +115,7 @@ public class JdbcUserDao implements UserDao {
 
     public boolean transfer(Account transferInfo, String userName){
         boolean success = false;
-        if(transferInfo.getUsername().equals(userName)) {
+        if(transferInfo.getUsername().equals(userName)) {  
             throw new ResourceAccessException("Cannot transfer to self");
         }
         String checkSql = "SELECT balance FROM account JOIN tenmo_user ON account.user_id = tenmo_user.user_id WHERE username = ?;";
