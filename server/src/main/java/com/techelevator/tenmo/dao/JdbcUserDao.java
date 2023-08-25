@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -208,10 +209,11 @@ public class JdbcUserDao implements UserDao {
          return transfers;
     }
 
-    public Transfer getTransferById(int transferId) {
+    public Transfer getTransferById(int transferId, String username) {
         Transfer transfer = new Transfer();
         String sql = "Select transfer_id, username, sender_id, amount, status From transfer Join tenmo_user ON transfer.receiver_id = tenmo_user.user_id Where transfer_id = ?;";
         String receivedSql = "Select username From tenmo_user Where user_id = ?;";
+
         try{
             SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, transferId);
             int userId = -1;
@@ -228,6 +230,9 @@ public class JdbcUserDao implements UserDao {
             }
         }catch(ResourceAccessException e) {
 
+        }
+        if(!username.equals(transfer.getFrom()) && !username.equals(transfer.getTo())){
+            throw new ResourceAccessException("You do not have access to this transfer information.");
         }
         return transfer;
     }
@@ -299,7 +304,7 @@ public class JdbcUserDao implements UserDao {
 
     public Transfer acceptRequest(TransferStatusUpdate update, String username) {
         //check for: does receiver have enough TE, pending status required, make sure user accepting request match the from(sender_id)
-        Transfer transfer = getTransferById(update.getTransferId());
+        Transfer transfer = getTransferById(update.getTransferId(), username);
         Account transferInfo = new Account();
         transferInfo.setUsername(transfer.getTo());
         transferInfo.setBalance(transfer.getTransferAmount());
@@ -322,11 +327,11 @@ public class JdbcUserDao implements UserDao {
         } else {
             throw new ResourceAccessException("Transfer Request Can Not Be Approved, Not Enough Funds");
         }
-        return getTransferById(update.getTransferId());
+        return getTransferById(update.getTransferId(), username);
     }
 
     public Transfer rejectRequest(TransferStatusUpdate update, String username) {
-        Transfer transfer = getTransferById(update.getTransferId());
+        Transfer transfer = getTransferById(update.getTransferId(), username);
         String sql = "Update transfer Set status = 'Rejected' Where transfer_id = ?;";
         if(!transfer.getStatus().equals("Pending")) {
             throw new ResourceAccessException("Request has already been processed.");
@@ -342,7 +347,7 @@ public class JdbcUserDao implements UserDao {
         }catch(ResourceAccessException e) {
             e.printStackTrace();
         }
-        return getTransferById(update.getTransferId());
+        return getTransferById(update.getTransferId(), username);
     }
 
     private User mapRowToUser(SqlRowSet rs) {

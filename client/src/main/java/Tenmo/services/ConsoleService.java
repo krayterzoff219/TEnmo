@@ -1,5 +1,9 @@
 package Tenmo.services;
 
+import Tenmo.model.Transfer;
+import Tenmo.model.User;
+
+import java.util.List;
 import java.util.Scanner;
 
 public class ConsoleService {
@@ -28,7 +32,21 @@ public class ConsoleService {
         System.out.println("(6) Return to Main Menu");
     }
 
+    public void printPendingRequests(List<Transfer> requests){
+        System.out.println();
+        for(Transfer request : requests){
+            System.out.println(request);
+        }
+        System.out.println();
+    }
 
+
+    public void printUserList(List<User> users){
+        System.out.println();
+        for(User user : users){
+            System.out.println("Username: " + user.getUsername());
+        }
+    }
 
     public int promptForMenuSelection(String prompt) {
         int menuSelection;

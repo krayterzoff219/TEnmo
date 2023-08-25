@@ -21,7 +21,7 @@ public interface UserDao {
     boolean transfer(Account transferInfo, String userName);
     List<Transfer> listTransfers(String username);
 
-    Transfer getTransferById(int transferId);
+    Transfer getTransferById(int transferId, String username);
 
     Transfer requestTransfer(Account transferInfo, String username);
     List<Transfer> getPendingRequests(String username);
