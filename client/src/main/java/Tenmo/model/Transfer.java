@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 public class Transfer {
 
     private int transferId;
-    private BigDecimal amount;
+    private BigDecimal transferAmount;
     private String from;
     private String to;
     private String status;
@@ -18,12 +18,12 @@ public class Transfer {
         this.transferId = transferId;
     }
 
-    public BigDecimal getAmount() {
-        return amount;
+    public BigDecimal getTransferAmount() {
+        return transferAmount;
     }
 
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
+    public void setTransferAmount(BigDecimal transferAmount) {
+        this.transferAmount = transferAmount;
     }
 
     public String getFrom() {
@@ -52,7 +52,7 @@ public class Transfer {
 
     public String toString(){
         return "Transfer ID: " + transferId +
-                "\nTransfer Amount: " + amount +
+                "\nTransfer Amount: " + transferAmount +
                 "\nFrom: " + from +
                 "\nTo: " + to +
                 "\nStatus: " + status;

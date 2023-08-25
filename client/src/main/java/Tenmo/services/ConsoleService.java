@@ -2,6 +2,7 @@ package Tenmo.services;
 
 import Tenmo.model.Transfer;
 import Tenmo.model.User;
+import Tenmo.model.UserName;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -37,10 +38,12 @@ public class ConsoleService {
     public void printPendingRequests(Transfer[] requests){
         System.out.println();
         int count = 1;
-        for(Transfer request : requests){
+        for (Transfer request : requests) {
             System.out.println("(" + count + ") \n" + request);
+            count++;
         }
         System.out.println();
+        System.out.println("(" + count + ") Exit");
     }
 
     public void printTransfers(Transfer[] allTransfers) {
@@ -52,10 +55,10 @@ public class ConsoleService {
     }
 
 
-    public void printUserList(User[] users){
+    public void printUserList(UserName[] users){
         System.out.println();
-        for(User user : users){
-            System.out.println("Username: " + user.getUsername());
+        for(UserName username : users){
+            System.out.println("Username: " + username);
         }
     }
 

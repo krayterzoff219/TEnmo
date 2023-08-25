@@ -2,12 +2,14 @@ package Tenmo;
 
 import Tenmo.model.Transfer;
 import Tenmo.model.User;
+import Tenmo.model.UserName;
 import Tenmo.services.AuthenticationService;
 import Tenmo.services.ConsoleService;
 import Tenmo.services.UserService;
 import org.springframework.web.client.ResourceAccessException;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 
 public class ClientApplication {
@@ -54,7 +56,7 @@ public class ClientApplication {
 						BigDecimal balance = userService.depositMoney(deposit);
 						consoleService.pause();
 					}else if (userChoice == 3){
-						User[] users = userService.getUsers();
+						UserName[] users = userService.getUsers();
 						consoleService.printUserList(users);
 						BigDecimal amount = consoleService.promptForAmount("Please enter the amount you would like to transfer: ");
 						String receiverName = consoleService.promptForString("Please enter the username of the user you would like to transfer to: ");
@@ -72,6 +74,9 @@ public class ClientApplication {
 						Transfer[] pendingList = userService.getPendingRequests();
 						consoleService.printPendingRequests(pendingList);
 						int transferMenuInput = consoleService.promptForMenuSelection("Select a Pending Transfer to Process: ");
+						if(transferMenuInput < 1){
+							throw new ResourceAccessException("Invalid Menu Selection");
+						}
 						Transfer selectedTransfer = pendingList[transferMenuInput -1];
 						System.out.println(selectedTransfer);
 						int acceptOrReject = consoleService.promptForMenuSelection("1.) Accept 2.) Reject");
@@ -90,7 +95,7 @@ public class ClientApplication {
 						consoleService.pause();
 					} else if (userChoice == 6){
 						System.out.println("Users Available to Request Transfer: ");
-						User[] users = userService.getUsers();
+						UserName[] users = userService.getUsers();
 						consoleService.printUserList(users);
 						String selectedUser = consoleService.promptForString("Enter the Username of the Selected User: ");
 						BigDecimal amount = consoleService.promptForAmount("Enter the amount you would like to request: ");

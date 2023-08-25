@@ -3,12 +3,16 @@ package Tenmo.services;
 import Tenmo.model.Transfer;
 import Tenmo.model.TransferStatus;
 import Tenmo.model.User;
+import Tenmo.model.UserName;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserService {
 
@@ -47,10 +51,11 @@ public class UserService {
         return success;
     }
 
-    public User[] getUsers(){
-        User[] users = null;
+    public UserName[] getUsers(){
+        UserName[] users = null;
         try {
-            users = restTemplate.exchange(API_BASE_URL + "users", HttpMethod.GET, makeAuthEntity(), User[].class).getBody();
+            ResponseEntity<UserName[]> response = restTemplate.exchange(API_BASE_URL + "users", HttpMethod.GET, makeAuthEntity(), UserName[].class);
+            users = response.getBody();
         } catch (RestClientResponseException | ResourceAccessException e){
             System.out.println(e.getMessage());
         }
@@ -60,6 +65,7 @@ public class UserService {
 
     public Transfer[] getTransfersForUser(){
         Transfer[] transfers = null;
+//        List<Transfer> transfers = new ArrayList<>();
         try {
             transfers = restTemplate.exchange(API_BASE_URL + "transfer/view", HttpMethod.GET, makeAuthEntity(), Transfer[].class).getBody();
         } catch (RestClientResponseException | ResourceAccessException e){
@@ -101,7 +107,7 @@ public class UserService {
         transferStatus.setStatus("Approved");
         boolean success = false;
         try {
-            restTemplate.exchange(API_BASE_URL + "transfer/pending", HttpMethod.PUT, makeStatusEntity(transferStatus), Transfer[].class).getBody();
+            restTemplate.put(API_BASE_URL + "transfer/pending", makeStatusEntity(transferStatus));
             success = true;
         } catch (RestClientResponseException | ResourceAccessException e){
             System.out.println(e.getMessage());
@@ -116,7 +122,7 @@ public class UserService {
         transferStatus.setStatus("Rejected");
         boolean success = false;
         try {
-            restTemplate.exchange(API_BASE_URL + "transfer/pending", HttpMethod.PUT, makeStatusEntity(transferStatus), Transfer[].class).getBody();
+            restTemplate.put(API_BASE_URL + "transfer/pending", makeStatusEntity(transferStatus));
             success = true;
         } catch (RestClientResponseException | ResourceAccessException e){
             System.out.println(e.getMessage());
