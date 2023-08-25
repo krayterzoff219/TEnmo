@@ -19,7 +19,7 @@ public class AuthenticationService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<CredentialsDto> entity = new HttpEntity<>(credentialsDto, headers);
-        String token = null;
+        String token = "";
         try {
             ResponseEntity<TokenDto> response = restTemplate.exchange(API_BASE_URL + "login", HttpMethod.POST, entity, TokenDto.class);
             TokenDto body = response.getBody();
@@ -27,7 +27,7 @@ public class AuthenticationService {
                 token = body.getToken();
             }
         } catch (RestClientResponseException | ResourceAccessException e) {
-            System.out.println(e.getMessage());
+            //System.out.println(e.getMessage());
         }
         return token;
     }

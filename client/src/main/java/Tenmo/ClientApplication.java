@@ -31,14 +31,16 @@ public class ClientApplication {
 			if(userChoice == 3){
 				break;
 			}
-			String username = consoleService.promptForString("Username: ");
-			String password = consoleService.promptForString("Password: ");
 			if(userChoice == 2){
+				String username = consoleService.promptForString("Username: ");
+				String password = consoleService.promptForString("Password: ");
 				authenticationService.register(username, password);
 			}
 			if(userChoice == 1){
 				String token = "";
 				while(token.equals("")) {
+					String username = consoleService.promptForString("Username: ");
+					String password = consoleService.promptForString("Password: ");
 					token = authenticationService.login(username, password);
 				}
 				userService.setAuthToken(token);
@@ -49,11 +51,12 @@ public class ClientApplication {
 					if(userChoice == 1){
 						BigDecimal balance = userService.getBalance();
 						System.out.print("Your Current Balance: ");
-						System.out.println(balance);
+						System.out.println("$" + balance);
 						consoleService.pause();
 					} else if (userChoice == 2){
 						BigDecimal deposit = consoleService.promptForAmount("Please enter the amount you would like to deposit: ");
 						BigDecimal balance = userService.depositMoney(deposit);
+						System.out.println("Your New Balance: $" + balance);
 						consoleService.pause();
 					}else if (userChoice == 3){
 						UserName[] users = userService.getUsers();
@@ -64,7 +67,7 @@ public class ClientApplication {
 						if(transferSuccessful) {
 							System.out.println("Transfer Succeeded!");
 							System.out.print("Here is your updated balance: ");
-							System.out.println(userService.getBalance());
+							System.out.println("$" + userService.getBalance());
 						} else {
 							System.out.println("Transfer Failed");
 						}

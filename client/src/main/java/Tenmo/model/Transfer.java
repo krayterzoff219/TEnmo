@@ -52,7 +52,7 @@ public class Transfer {
 
     public String toString(){
         return "Transfer ID: " + transferId +
-                "\nTransfer Amount: " + transferAmount +
+                "\nTransfer Amount: $" + transferAmount +
                 "\nFrom: " + from +
                 "\nTo: " + to +
                 "\nStatus: " + status;

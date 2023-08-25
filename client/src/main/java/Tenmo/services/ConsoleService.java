@@ -64,6 +64,7 @@ public class ConsoleService {
 
     public int promptForMenuSelection(String prompt) {
         int menuSelection;
+        System.out.println();
         System.out.print(prompt);
         try {
             menuSelection = Integer.parseInt(userScan.nextLine());
